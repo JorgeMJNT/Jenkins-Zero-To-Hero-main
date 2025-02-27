@@ -15,6 +15,7 @@ pipeline {
     stage('Checkout') {
       steps {
         sh 'echo "Checking out source code..."'
+        sh 'git checkout main'
       }
     }
 
@@ -47,7 +48,6 @@ pipeline {
             withCredentials([string(credentialsId: 'docker-cred', variable: 'DOCKER_TOKEN')]) {
               sh 'echo "$DOCKER_TOKEN" | docker login -u "jorgejardimneto" --password-stdin'
             }
-
             sh "docker push ${DOCKER_IMAGE}"
             sh 'docker logout'
           } catch (Exception e) {
@@ -63,6 +63,7 @@ pipeline {
           sh '''
             git config user.email "jjardimneto@gmail.com"
             git config user.name "JorgeMJNT"
+            git pull --rebase https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} main
             sed -i -e "s|ultimate-cicd.*|ultimate-cicd:${BUILD_NUMBER}|g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
             git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
             git commit -m "Update deployment image to version ${BUILD_NUMBER}"
