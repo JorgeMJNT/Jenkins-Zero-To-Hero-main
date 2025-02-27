@@ -16,6 +16,8 @@ pipeline {
       steps {
         sh 'echo "Checking out source code..."'
         sh 'git checkout main'
+        sh 'sudo chown -R jenkins:jenkins /var/lib/jenkins/workspace'
+        sh 'sudo chmod -R 775 /var/lib/jenkins/workspace'
       }
     }
 
@@ -74,3 +76,4 @@ pipeline {
     }
   }
 }
+
