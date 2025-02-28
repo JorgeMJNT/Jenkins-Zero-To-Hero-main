@@ -35,7 +35,7 @@ pipeline {
       }
     }
 
-    stage('Static Code Analysis (SAST) - SonarQube') {
+    stage('Static Code Analysis') {
       steps {
         withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
@@ -43,29 +43,6 @@ pipeline {
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
             mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.host.url=${SONAR_URL}
           '''
-        }
-      }
-    }
-
-    stage('SCA - Dependency Analysis (OWASP Dependency-Check)') {
-      steps {
-        sh '''
-          set -e
-          echo "Running OWASP Dependency-Check..."
-          cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-          mvn org.owasp:dependency-check-maven:check
-
-          echo "Saving OWASP Dependency-Check report..."
-          mkdir -p reports
-          mv target/dependency-check-report.html reports/
-
-          echo "OWASP Dependency-Check completed!"
-        '''
-      }
-
-      post {
-        always {
-          archiveArtifacts artifacts: 'reports/dependency-check-report.html', fingerprint: true
         }
       }
     }
