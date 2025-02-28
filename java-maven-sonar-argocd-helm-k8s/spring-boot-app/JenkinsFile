@@ -50,11 +50,11 @@ pipeline {
     stage('SCA - OWASP Dependency-Check') {
       steps {
         script {
-          withEnv(["PATH+DCHECK=/var/lib/jenkins/tools/org.jenkinsci.plugins.DependencyCheck.DependencyCheckInstallation/owasp-dc/bin"]) {
+          withEnv(["PATH+DCHECK=/var/lib/jenkins/tools/org.jenkinsci.plugins.DependencyCheck.DependencyCheckInstallation/owasp-dc/bin:/usr/local/bin"]) {
             sh '''
               set -e
               echo "Running OWASP Dependency-Check..."
-              dependency-check --project "MeuProjeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out dependency-check-report.html --failOnCVSS 7
+              /usr/local/bin/dependency-check --project "MeuProjeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out dependency-check-report.html --failOnCVSS 7
             '''
           }
         }
