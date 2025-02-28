@@ -35,7 +35,7 @@ pipeline {
       }
     }
 
-    stage('Static Code Analysis') {
+    stage('Static Code Analysis (SAST) - SonarQube') {
       steps {
         withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
@@ -43,6 +43,20 @@ pipeline {
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
             mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.host.url=${SONAR_URL}
           '''
+        }
+      }
+    }
+
+    stage('SCA - OWASP Dependency-Check') {
+      steps {
+        script {
+          dependencyCheck additionalArguments: '--failOnCVSS 7'
+        }
+      }
+
+      post {
+        always {
+            archiveArtifacts artifacts: '**/dependency-check-report.html', fingerprint: true
         }
       }
     }
@@ -81,10 +95,10 @@ pipeline {
             git config user.name "JorgeMJNT"
 
             echo "Updating deployment file..."
-            sed -i -e "s|ultimate-cicd:.*|ultimate-cicd:${BUILD_NUMBER}|" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+            sed -i -e "s|ultimate-cicd:.*|ultimate-cicd:${env.BUILD_NUMBER}|" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
 
             git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+            git commit -m "Update deployment image to version ${env.BUILD_NUMBER}"
 
             echo "Pulling latest changes..."
             git pull --rebase origin main
