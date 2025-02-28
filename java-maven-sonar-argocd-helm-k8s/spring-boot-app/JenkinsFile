@@ -50,18 +50,23 @@ pipeline {
     stage('SCA - OWASP Dependency-Check') {
       steps {
         script {
-          withEnv(["PATH+DCHECK=/var/lib/jenkins/tools/org.jenkinsci.plugins.DependencyCheck.DependencyCheckInstallation/owasp-dc/bin:/usr/local/bin"]) {
-            sh '''
+          sh '''
               set -e
-              echo "Running OWASP Dependency-Check..."
-              /usr/local/bin/dependency-check --project "MeuProjeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out dependency-check-report.html --failOnCVSS 7
-            '''
-          }
+              echo "Instalando OWASP Dependency-Check..."
+              curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+              unzip dependency-check-9.0.9-release.zip
+              export PATH=$PATH:$(pwd)/dependency-check/bin
+
+              echo "Rodando análise de dependências..."
+              dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/
+
+              echo "Análise concluída! Salvando resultados..."
+          '''
         }
       }
       post {
         always {
-          archiveArtifacts artifacts: '**/dependency-check-report.html', fingerprint: true
+          archiveArtifacts artifacts: 'reports/**', fingerprint: true
         }
       }
     }
