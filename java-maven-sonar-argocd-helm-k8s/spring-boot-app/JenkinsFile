@@ -65,7 +65,7 @@ pipeline {
                     export PATH=$PATH:$(pwd)/dependency-check/bin
 
                     echo "Rodando análise de dependências com NVD API Key..."
-                    dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY}
+                    dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --disableUpdate
 
                     echo "Análise concluída! Salvando resultados..."
                 '''
@@ -129,3 +129,4 @@ pipeline {
     }
   }
 }
+
