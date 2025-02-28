@@ -50,18 +50,24 @@ pipeline {
     stage('SCA - OWASP Dependency-Check') {
       steps {
         script {
-          sh '''
-              set -e
-              echo "Instalando OWASP Dependency-Check..."
-              curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
-              unzip dependency-check-9.0.9-release.zip
-              export PATH=$PATH:$(pwd)/dependency-check/bin
+            sh '''
+                set -e
+                echo "Verificando se unzip está instalado..."
+                if ! command -v unzip &> /dev/null; then
+                    echo "Instalando unzip..."
+                    apt-get update && apt-get install -y unzip
+                fi
 
-              echo "Rodando análise de dependências..."
-              dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/
+                echo "Instalando OWASP Dependency-Check..."
+                curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+                unzip dependency-check-9.0.9-release.zip
+                export PATH=$PATH:$(pwd)/dependency-check/bin
 
-              echo "Análise concluída! Salvando resultados..."
-          '''
+                echo "Rodando análise de dependências..."
+                dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/
+
+                echo "Análise concluída! Salvando resultados..."
+            '''
         }
       }
       post {
