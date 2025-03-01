@@ -11,7 +11,7 @@ pipeline {
     GIT_USER_NAME = "JorgeMJNT"
     DOCKER_IMAGE = "jorgejardimneto/ultimate-cicd:${env.BUILD_NUMBER}"
     SONAR_URL = "http://18.117.154.129:9000"
-    NVD_API_DELAY = "10000" // Delay adicionado para evitar bloqueios na API do NVD
+    NVD_API_DELAY = "15000" // Aumentando o delay para evitar bloqueios na API do NVD
     PROJECT_NAME = "spring-boot-demo" // Nome do projeto extraído do pom.xml
   }
 
@@ -60,6 +60,9 @@ pipeline {
                   apt-get update && apt-get install -y unzip
               fi
 
+              echo "Removendo banco de dados local corrompido, se existir..."
+              rm -rf ~/.dependency-check/
+
               echo "Instalando OWASP Dependency-Check..."
               curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
               unzip -o dependency-check-9.0.9-release.zip
@@ -67,6 +70,9 @@ pipeline {
 
               echo "Criando diretório de reports, se não existir..."
               mkdir -p reports
+
+              echo "Forçando atualização do banco de dados antes da análise..."
+              dependency-check.sh --updateOnly --nvdApiKey ${NVD_API_KEY}
 
               echo "Rodando análise de dependências com delay de ${NVD_API_DELAY}ms..."
               dependency-check.sh --project "${PROJECT_NAME}" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
