@@ -67,7 +67,7 @@ pipeline {
                     mkdir -p reports
 
                     echo "Rodando análise de dependências..."
-                    dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY}
+                    dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay 6000
                 '''
             }
         }
@@ -124,3 +124,4 @@ pipeline {
     }
   }
 }
+
