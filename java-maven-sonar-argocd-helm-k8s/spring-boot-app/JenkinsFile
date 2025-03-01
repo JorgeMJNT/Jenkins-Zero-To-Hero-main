@@ -11,6 +11,7 @@ pipeline {
     GIT_USER_NAME = "JorgeMJNT"
     DOCKER_IMAGE = "jorgejardimneto/ultimate-cicd:${env.BUILD_NUMBER}"
     SONAR_URL = "http://18.117.154.129:9000"
+    NVD_API_DELAY = "6000" // Delay adicionado para evitar bloqueios na API do NVD
   }
 
   stages {
@@ -49,27 +50,27 @@ pipeline {
     stage('SCA - OWASP Dependency-Check') {
       steps {
         script {
-            withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
-                sh '''
-                    set -e
-                    echo "Verificando se unzip está instalado..."
-                    if ! command -v unzip &> /dev/null; then
-                        echo "Instalando unzip..."
-                        apt-get update && apt-get install -y unzip
-                    fi
+          withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
+            sh '''
+              set -e
+              echo "Verificando se unzip está instalado..."
+              if ! command -v unzip &> /dev/null; then
+                  echo "Instalando unzip..."
+                  apt-get update && apt-get install -y unzip
+              fi
 
-                    echo "Baixando e instalando OWASP Dependency-Check..."
-                    curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
-                    unzip -o dependency-check-9.0.9-release.zip
-                    export PATH=$PATH:$(pwd)/dependency-check/bin
+              echo "Baixando e instalando OWASP Dependency-Check..."
+              curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+              unzip -o dependency-check-9.0.9-release.zip
+              export PATH=$PATH:$(pwd)/dependency-check/bin
 
-                    echo "Criando diretório de reports, se não existir..."
-                    mkdir -p reports
+              echo "Criando diretório de reports, se não existir..."
+              mkdir -p reports
 
-                    echo "Rodando análise de dependências..."
-                    dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay 6000
-                '''
-            }
+              echo "Rodando análise de dependências com delay de 6000ms..."
+              dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
+            '''
+          }
         }
       }
       post {
@@ -124,4 +125,3 @@ pipeline {
     }
   }
 }
-
