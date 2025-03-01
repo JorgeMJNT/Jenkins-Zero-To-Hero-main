@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17  # Usa Java 17 para rodar o Dependency-Check
+    commands:
+      - echo "Instalando OWASP Dependency-Check..."
+      - curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
+      - unzip -o dependency-check-9.0.9-release.zip
+      - export PATH=$PATH:$(pwd)/dependency-check/bin
+
+  build:
+    commands:
+      - echo "Rodando análise de dependências no Jenkins..."
+      - dependency-check.sh --project "meu-projeto" --scan . --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay 6000
+
+  post_build:
+    commands:
+      - echo "Análise concluída! Salvando resultados no Jenkins..."
+      - archiveArtifacts artifacts: 'reports/**', fingerprint: true
