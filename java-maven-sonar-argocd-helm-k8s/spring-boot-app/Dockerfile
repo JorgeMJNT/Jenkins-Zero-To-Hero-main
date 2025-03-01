@@ -1,13 +1,17 @@
-# You can change this base image to anything else
-# But make sure to use the correct version of Java
-FROM eclipse-temurin:17-jre-alpine
+# Usa uma versão leve do Java 17
+FROM eclipse-temurin:17-jre-slim
 
-# Simply the artifact path
+# Define um argumento para o nome do JAR
 ARG artifact=target/spring-boot-web.jar
 
+# Define o diretório de trabalho
 WORKDIR /opt/app
 
+# Copia o JAR para dentro do contêiner
 COPY ${artifact} app.jar
 
-# This should not be changed
-ENTRYPOINT ["java","-jar","app.jar"]
+# Garante que o JAR tem permissões de execução
+RUN chmod +x app.jar
+
+# Define o comando de entrada
+ENTRYPOINT ["java", "-jar", "app.jar"]

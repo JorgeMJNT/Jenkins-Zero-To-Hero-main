@@ -12,6 +12,7 @@ pipeline {
     DOCKER_IMAGE = "jorgejardimneto/ultimate-cicd:${env.BUILD_NUMBER}"
     SONAR_URL = "http://18.117.154.129:9000"
     NVD_API_DELAY = "10000" // Delay adicionado para evitar bloqueios na API do NVD
+    PROJECT_NAME = "spring-boot-demo" // Nome do projeto extraído do pom.xml
   }
 
   stages {
@@ -41,7 +42,7 @@ pipeline {
           sh '''
             set -e
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-            mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.host.url=${SONAR_URL} -Dsonar.projectKey=meu-projeto
+            mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.host.url=${SONAR_URL} -Dsonar.projectKey=${PROJECT_NAME}
           '''
         }
       }
@@ -59,7 +60,7 @@ pipeline {
                   apt-get update && apt-get install -y unzip
               fi
 
-              echo "Baixando e instalando OWASP Dependency-Check..."
+              echo "Instalando OWASP Dependency-Check..."
               curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
               unzip -o dependency-check-9.0.9-release.zip
               export PATH=$PATH:$(pwd)/dependency-check/bin
@@ -68,7 +69,7 @@ pipeline {
               mkdir -p reports
 
               echo "Rodando análise de dependências com delay de ${NVD_API_DELAY}ms..."
-              dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
+              dependency-check.sh --project "${PROJECT_NAME}" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
             '''
           }
         }

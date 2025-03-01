@@ -12,10 +12,14 @@ phases:
 
   build:
     commands:
+      - echo "Compilando o projeto com Maven..."
+      - cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+      - mvn clean verify package -DskipTests=false
+      
       - echo "Rodando análise de dependências no Jenkins..."
-      - dependency-check.sh --project "meu-projeto" --scan . --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay 6000
+      - dependency-check.sh --project "spring-boot-demo" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay 6000
 
   post_build:
     commands:
-      - echo "Análise concluída! Salvando resultados no Jenkins..."
-      - archiveArtifacts artifacts: 'reports/**', fingerprint: true
+      - echo "Análise concluída! Salvando resultados no S3..."
+      - aws s3 cp reports/ s3://meu-bucket-de-relatorios/ --recursive
