@@ -71,6 +71,9 @@ pipeline {
               echo "Criando diretório de reports, se não existir..."
               mkdir -p reports
 
+              echo "Configurando memória para evitar erros de Out-of-Memory..."
+              export JAVA_OPTS="-Xmx4g -XX:+UseStringDeduplication"
+
               echo "Rodando análise de dependências com delay de ${NVD_API_DELAY}ms..."
               dependency-check.sh --project "${PROJECT_NAME}" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
             '''
@@ -129,4 +132,3 @@ pipeline {
     }
   }
 }
-
