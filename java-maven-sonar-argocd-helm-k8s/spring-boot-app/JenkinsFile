@@ -11,7 +11,7 @@ pipeline {
     GIT_USER_NAME = "JorgeMJNT"
     DOCKER_IMAGE = "jorgejardimneto/ultimate-cicd:${env.BUILD_NUMBER}"
     SONAR_URL = "http://18.117.154.129:9000"
-    NVD_API_DELAY = "15000" // Aumentando o delay para evitar bloqueios na API do NVD
+    NVD_API_DELAY = "30000" // Aumentando o delay para evitar bloqueios na API do NVD
     PROJECT_NAME = "spring-boot-demo" // Nome do projeto extraído do pom.xml
   }
 
@@ -129,3 +129,4 @@ pipeline {
     }
   }
 }
+
