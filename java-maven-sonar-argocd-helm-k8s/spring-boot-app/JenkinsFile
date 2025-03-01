@@ -53,13 +53,7 @@ pipeline {
           withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
             sh '''
               set -e
-              echo "Verificando se unzip está instalado..."
-              if ! command -v unzip &> /dev/null; then
-                  echo "Instalando unzip..."
-                  apt-get update && apt-get install -y unzip
-              fi
-
-              echo "Baixando e instalando OWASP Dependency-Check..."
+              echo "Instalando OWASP Dependency-Check..."
               curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
               unzip -o dependency-check-9.0.9-release.zip
               export PATH=$PATH:$(pwd)/dependency-check/bin
@@ -67,8 +61,8 @@ pipeline {
               echo "Criando diretório de reports, se não existir..."
               mkdir -p reports
 
-              echo "Rodando análise de dependências com delay de 6000ms..."
-              dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
+              echo "Rodando análise de dependências com delay de ${NVD_API_DELAY}ms..."
+              dependency-check.sh --project "meu-projeto" --scan . --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
             '''
           }
         }
