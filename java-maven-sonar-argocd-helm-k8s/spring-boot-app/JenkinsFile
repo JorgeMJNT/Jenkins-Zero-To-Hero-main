@@ -11,7 +11,11 @@ pipeline {
     GIT_USER_NAME = "JorgeMJNT"
     DOCKER_IMAGE = "jorgejardimneto/ultimate-cicd:${env.BUILD_NUMBER}"
     SONAR_URL = "http://18.117.154.129:9000"
-    NVD_API_DELAY = "6000" // Delay adicionado para evitar bloqueios na API do NVD
+    NVD_API_DELAY = "10000" // Delay aumentado para evitar rate-limiting
+  }
+
+  tools {
+    dependencyCheck 'DP-Check' // Usando a versão instalada via Tools do Jenkins
   }
 
   stages {
@@ -53,22 +57,17 @@ pipeline {
           withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
             sh '''
               set -e
-              echo "Verificando se unzip está instalado..."
-              if ! command -v unzip &> /dev/null; then
-                  echo "Instalando unzip..."
-                  apt-get update && apt-get install -y unzip
-              fi
+              echo "Rodando análise de dependências com Dependency-Check instalado no Jenkins..."
 
-              echo "Baixando e instalando OWASP Dependency-Check..."
-              curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
-              unzip -o dependency-check-9.0.9-release.zip
-              export PATH=$PATH:$(pwd)/dependency-check/bin
+              # Obtém o caminho da ferramenta instalada via Tools do Jenkins
+              DEP_CHECK_PATH=$(which dependency-check.sh)
 
-              echo "Criando diretório de reports, se não existir..."
+              echo "Caminho do Dependency-Check: $DEP_CHECK_PATH"
+
               mkdir -p reports
 
-              echo "Rodando análise de dependências com delay de 6000ms..."
-              dependency-check.sh --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY}
+              # Executando análise de dependências com maior delay e desativando atualização do CISA
+              $DEP_CHECK_PATH --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY} --disableCPE
             '''
           }
         }
