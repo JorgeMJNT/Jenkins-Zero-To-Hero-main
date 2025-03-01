@@ -11,7 +11,8 @@ pipeline {
     GIT_USER_NAME = "JorgeMJNT"
     DOCKER_IMAGE = "jorgejardimneto/ultimate-cicd:${env.BUILD_NUMBER}"
     SONAR_URL = "http://18.117.154.129:9000"
-    NVD_API_DELAY = "10000" // Aumentando delay para evitar rate-limiting
+    NVD_API_DELAY = "10000"
+    DEP_CHECK_PATH = "/var/jenkins_home/tools/hudson.plugins.DependencyCheck.DependencyCheckInstallation/DP-Check/bin/dependency-check.sh"
   }
 
   stages {
@@ -55,20 +56,14 @@ pipeline {
               set -e
               echo "Rodando análise de dependências com Dependency-Check instalado no Jenkins..."
 
-              # Obtém o caminho do Dependency-Check instalado via Tools do Jenkins
-              DEP_CHECK_PATH=$(which dependency-check.sh)
-
-              if [ -z "$DEP_CHECK_PATH" ]; then
+              if [ ! -f "${DEP_CHECK_PATH}" ]; then
                   echo "ERRO: Dependency-Check não encontrado! Verifique a instalação no Jenkins."
                   exit 1
               fi
 
-              echo "Caminho do Dependency-Check: $DEP_CHECK_PATH"
-
+              echo "Executando Dependency-Check..."
               mkdir -p reports
-
-              # Executando análise de dependências com maior delay e desativando atualização do CISA
-              $DEP_CHECK_PATH --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY} --disableCPE
+              ${DEP_CHECK_PATH} --project "meu-projeto" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay ${NVD_API_DELAY} --disableCPE
             '''
           }
         }
