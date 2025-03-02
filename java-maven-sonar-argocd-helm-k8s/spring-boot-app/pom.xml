@@ -50,7 +50,6 @@
     </dependencies>
 
     <build>
-
         <finalName>spring-boot-web</finalName>
 
         <plugins>
@@ -68,8 +67,25 @@
                 </configuration>
             </plugin>
 
+            <!-- Plugin OWASP Dependency-Check -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>9.0.9</version> <!-- Verifique a versão mais recente -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <format>HTML</format> <!-- Define o formato do relatório -->
+                    <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
+                    <nvdApiKey>0b9d9537-6c87-4ee7-9695-b2aa15161c9a</nvdApiKey> <!-- Sua chave da API do NVD -->
+                    <failBuildOnCVSS>7</failBuildOnCVSS> <!-- Build falha se encontrar CVEs críticas -->
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
-
-
-</project>
