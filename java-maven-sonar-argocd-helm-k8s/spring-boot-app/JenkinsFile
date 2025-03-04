@@ -54,8 +54,14 @@ pipeline {
             steps {
                 sh '''
                   echo "Rodando Trivy para análise de vulnerabilidades..."
-                  trivy image --severity HIGH,CRITICAL --format table ${DOCKER_IMAGE}
+                  trivy image --severity HIGH,CRITICAL --format json -o trivy-report.json ${DOCKER_IMAGE}
                 '''
+            }
+        }
+
+        stage('Publicar Relatório de Segurança') {
+            steps {
+                archiveArtifacts artifacts: 'trivy-report.json', fingerprint: true
             }
         }
     }
