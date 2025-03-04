@@ -5,23 +5,39 @@ phases:
     runtime-versions:
       java: corretto17  # Usa Java 17 para rodar o Maven
     commands:
+      - echo "Atualizando pacotes..."
+      - sudo apt update -y
+
       - echo "Instalando Trivy..."
-      - sudo apt update
       - sudo apt install -y trivy
+
+      - echo "Instalando Maven Cache para otimizar builds futuros..."
+      - mvn dependency:go-offline
+
+  pre_build:
+    commands:
+      - echo "Rodando testes do Maven..."
+      - cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+      - mvn test
 
   build:
     commands:
       - echo "Compilando o projeto com Maven..."
-      - cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-      - mvn clean verify package -DskipTests=false
+      - mvn clean package -DskipTests=false
 
       - echo "Construindo a imagem Docker..."
       - docker build -t jorgejardimneto/ultimate-cicd:$CODEBUILD_BUILD_NUMBER .
 
       - echo "Rodando análise de vulnerabilidades com Trivy..."
       - trivy image --severity HIGH,CRITICAL --format json -o trivy-report.json jorgejardimneto/ultimate-cicd:$CODEBUILD_BUILD_NUMBER
+      - cat trivy-report.json  # Exibe o relatório no log do CodeBuild
 
   post_build:
     commands:
       - echo "Análise concluída! Salvando resultados no S3..."
       - aws s3 cp trivy-report.json s3://meu-bucket-de-relatorios/
+
+      - echo "Fazendo push da imagem Docker para repositório (opcional)..."
+      # Descomente abaixo se quiser enviar para o Docker Hub ou ECR
+      # - docker login -u $DOCKER_USER -p $DOCKER_PASS
+      # - docker push jorgejardimneto/ultimate-cicd:$CODEBUILD_BUILD_NUMBER
