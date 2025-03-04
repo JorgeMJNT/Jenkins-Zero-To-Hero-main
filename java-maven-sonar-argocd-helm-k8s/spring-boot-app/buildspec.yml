@@ -3,23 +3,25 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: corretto17  # Usa Java 17 para rodar o Dependency-Check
+      java: corretto17  # Usa Java 17 para rodar o Maven
     commands:
-      - echo "Instalando OWASP Dependency-Check..."
-      - curl -sLO https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.9/dependency-check-9.0.9-release.zip
-      - unzip -o dependency-check-9.0.9-release.zip
-      - export PATH=$PATH:$(pwd)/dependency-check/bin
+      - echo "Instalando Trivy..."
+      - sudo apt update
+      - sudo apt install -y trivy
 
   build:
     commands:
       - echo "Compilando o projeto com Maven..."
       - cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
       - mvn clean verify package -DskipTests=false
-      
-      - echo "Rodando análise de dependências no Jenkins..."
-      - dependency-check.sh --project "spring-boot-demo" --scan java-maven-sonar-argocd-helm-k8s/spring-boot-app --format HTML --out reports/ --nvdApiKey ${NVD_API_KEY} --nvdApiDelay 6000
+
+      - echo "Construindo a imagem Docker..."
+      - docker build -t jorgejardimneto/ultimate-cicd:$CODEBUILD_BUILD_NUMBER .
+
+      - echo "Rodando análise de vulnerabilidades com Trivy..."
+      - trivy image --severity HIGH,CRITICAL --format json -o trivy-report.json jorgejardimneto/ultimate-cicd:$CODEBUILD_BUILD_NUMBER
 
   post_build:
     commands:
       - echo "Análise concluída! Salvando resultados no S3..."
-      - aws s3 cp reports/ s3://meu-bucket-de-relatorios/ --recursive
+      - aws s3 cp trivy-report.json s3://meu-bucket-de-relatorios/
