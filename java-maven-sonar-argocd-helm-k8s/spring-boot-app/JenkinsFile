@@ -37,25 +37,30 @@ pipeline {
 
         stage('Static Code Analysis (SAST) - SonarQube') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                        cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-                        mvn sonar:sonar \
-                            -Dsonar.projectKey=${PROJECT_NAME} \
-                            -Dsonar.host.url=${SONAR_URL} \
-                            -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
+                withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_AUTH_TOKEN')]) {
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                            cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=${PROJECT_NAME} \
+                                -Dsonar.host.url=${SONAR_URL} \
+                                -Dsonar.login=$SONAR_AUTH_TOKEN \
+                                -Dsonar.qualitygate.wait=true
+                        '''
+                    }
                 }
             }
         }
 
         stage('Container Security Scan - Trivy') {
             steps {
-                sh '''
-                    echo "Running Trivy vulnerability scan..."
-                    docker pull ${DOCKER_IMAGE}
-                    trivy image --severity HIGH,CRITICAL --format json -o trivy-report.json ${DOCKER_IMAGE}
-                '''
+                script {
+                    sh '''
+                        echo "Running Trivy vulnerability scan..."
+                        docker pull ${DOCKER_IMAGE} || echo "Docker image not found locally, continuing..."
+                        trivy image --severity HIGH,CRITICAL --format json -o trivy-report.json ${DOCKER_IMAGE}
+                    '''
+                }
             }
             post {
                 always {
